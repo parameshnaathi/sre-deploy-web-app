@@ -4,10 +4,20 @@ import streamlit as st
 VALID_CLIENTS = [
     "nhp", "avmed", "bcbsks", "bcbsla", "bcbsma", "bcbsnc", "bcbsri", "bcbssc", "bcbst", "bcbsvt",
     "bcid", "bluekc", "brighton", "carefirst", "centene", "cobaltblue", "tpa", "ers", "fallon",
-    "hcsc", "hcslabor", "healthcomp", "highmark", "hmsa", "horizon", "kpwa", "kpco", "kpga",
+    "hcsc", "hcsclabor", "healthcomp", "highmark", "hmsa", "horizon", "kpwa", "kpco", "kpga",
     "kpnw", "lifewise", "medxoom", "moda", "molina", "firstchoice", "pai", "personify", "premera",
     "sandbox", "selecthealth", "sharedhealthms", "texicare", "triples", "trs"
 ]
+
+# Aliases for clients: map all alternate names to canonical client key (all lowercase)
+CLIENT_ALIASES = {
+    # NHP and its aliases
+    "nhp": "nhp", "ahp": "nhp", "allways": "nhp", "mgbhp": "nhp",
+    # TPA and its aliases
+    "tpa": "tpa", "enterprise": "tpa", "allied benefits": "tpa", "benesys": "tpa", "cox health": "tpa", "united here health": "tpa", "pba": "tpa", "wellfleet": "tpa", "summacare": "tpa",
+    # Healthcomp and its alias
+    "healthcomp": "healthcomp", "personify": "healthcomp"
+}
 
 def get_opposite_variant(variant: str) -> str:
     variant = variant.lower()
@@ -110,10 +120,12 @@ if st.button("Generate Deployment Steps"):
         st.warning("Please provide both client name and version.")
     else:
         client_lc = client_input.lower()
-        if client_lc not in VALID_CLIENTS:
+        # Map alias to canonical client name if present
+        canonical_client = CLIENT_ALIASES.get(client_lc, client_lc)
+        if canonical_client not in VALID_CLIENTS:
             st.error("⚠️ Invalid client. Please enter a valid client from the predefined list.")
         else:
-            plan = generate_deployment_plan(client_lc, version, variant)
+            plan = generate_deployment_plan(canonical_client, version, variant)
             step_counter = 1
             for item in plan:
                 numbered = item.get("numbered", True)
