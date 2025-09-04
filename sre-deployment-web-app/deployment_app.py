@@ -19,6 +19,17 @@ CLIENT_ALIASES = {
     "healthcomp": "healthcomp", "personify": "healthcomp"
 }
 
+# Build dropdown options: all valid clients and their aliases, capitalized, no duplicates
+_dropdown_options_set = set(VALID_CLIENTS)
+_dropdown_options_set.update(CLIENT_ALIASES.keys())
+CLIENT_DROPDOWN_OPTIONS = sorted({name.upper() for name in _dropdown_options_set})
+
+# Map dropdown display name (upper) to canonical client (lower)
+DISPLAY_TO_CANONICAL = {}
+for name in _dropdown_options_set:
+    canonical = CLIENT_ALIASES.get(name, name)
+    DISPLAY_TO_CANONICAL[name.upper()] = canonical
+
 def get_opposite_variant(variant: str) -> str:
     variant = variant.lower()
     if variant == "a":
@@ -110,19 +121,25 @@ This tool generates **deployment steps** for a client environment.
 Commands are in **copyable code snippets**, with **clickable validation endpoints** below each.
 """)
 
-client_input = st.text_input("Client Name").strip()
+# Client dropdown with search (case-insensitive)
+selected_client_display = st.selectbox(
+    "Client Name",
+    CLIENT_DROPDOWN_OPTIONS,
+    index=0,
+    key="client_dropdown",
+    help="Start typing to search for a client (case-insensitive)"
+)
 version = st.text_input("Version (e.g., 1.2.3)").strip()
 # 🔽 Variant is a dropdown (a/b)
 variant = st.selectbox("Deployment Variant", ["a", "b"])
 
 if st.button("Generate Deployment Steps"):
-    if not client_input or not version:
+    if not selected_client_display or not version:
         st.warning("Please provide both client name and version.")
     else:
-        client_lc = client_input.lower()
-        # Map alias to canonical client name if present
-        canonical_client = CLIENT_ALIASES.get(client_lc, client_lc)
-        if canonical_client not in VALID_CLIENTS:
+        # Map dropdown display name to canonical client name
+        canonical_client = DISPLAY_TO_CANONICAL.get(selected_client_display.upper())
+        if not canonical_client or canonical_client not in VALID_CLIENTS:
             st.error("⚠️ Invalid client. Please enter a valid client from the predefined list.")
         else:
             plan = generate_deployment_plan(canonical_client, version, variant)
