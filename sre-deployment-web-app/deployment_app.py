@@ -1,7 +1,5 @@
 
 # ...existing code...
-from dotenv import load_dotenv
-load_dotenv()
 import streamlit as st
 from deployment_logic import (
     get_client_dropdown_options,
