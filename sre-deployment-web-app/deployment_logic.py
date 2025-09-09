@@ -32,6 +32,17 @@ def generate_deployment_plan(client_lc: str, version: str, variant: str):
     """
     client_lc: client in lowercase (used for all commands/URLs)
     """
+
+    # Map for validation endpoint client names
+    VALIDATION_CLIENT_MAP = {
+        "nhp": "allways",
+        "tpa": "enterprise",
+        "kpwa": "enterprise",
+        "firstchoice": "myfch"
+    }
+    def get_validation_client_name(client_lc):
+        return VALIDATION_CLIENT_MAP.get(client_lc, client_lc)
+
     opposite = get_opposite_variant(variant)
     if not opposite:
         return []
@@ -45,21 +56,23 @@ def generate_deployment_plan(client_lc: str, version: str, variant: str):
                  "commands": [f"dradis deploy all the things {version} to {client_lc} production_{variant}"],
                  "validation": f"https://app-ops.aws.mdx.med/deploys?client={client_lc}&env=production&variant={variant}"})
 
+    validation_client = get_validation_client_name(client_lc)
+
     plan.append({"heading": "Full Indexing",
                  "commands": [f"dradis index data for {client_lc} production_{variant}"],
-                 "validation": f"https://data-prd-{variant}-{client_lc}.aws.mdx.med/index_status"})
+                 "validation": f"https://data-prd-{variant}-{validation_client}.aws.mdx.med/index_status"})
 
     plan.append({"heading": "Referencing",
                  "commands": [f"dradis index reference for {client_lc} production_{variant}"],
-                 "validation": f"https://solr-master-prd-{variant}-{client_lc}.aws.mdx.med:8443/solr/reference/select?fq=type%3A%22PlatformSearch%3A%3ADocuments%3A%3AReferenceBatchMeta%22&q=*%3A*&sort=batch_created_at_ds+desc"})
+                 "validation": f"https://solr-master-prd-{variant}-{validation_client}.aws.mdx.med:8443/solr/reference/select?fq=type%3A%22PlatformSearch%3A%3ADocuments%3A%3AReferenceBatchMeta%22&q=*%3A*&sort=batch_created_at_ds+desc"})
 
     plan.append({"heading": "Billing Codes",
                  "commands": [f"dradis index billing_codes for {client_lc} production_{variant}"],
-                 "validation": f"https://solr-cost-prd-{variant}-{client_lc}.aws.mdx.med:8443/solr/cost/select?fq=type%3A%22PlatformSearch%3A%3ADocuments%3A%3ABillingCode%22&q=*%3A*&sort=batch_created_at_ds+desc"})
+                 "validation": f"https://solr-cost-prd-{variant}-{validation_client}.aws.mdx.med:8443/solr/cost/select?fq=type%3A%22PlatformSearch%3A%3ADocuments%3A%3ABillingCode%22&q=*%3A*&sort=batch_created_at_ds+desc"})
 
     plan.append({"heading": "Solr: Replication",
                  "commands": [f"dradis cap solr:replicate for etl {client_lc} production_{variant} debug"],
-                 "validation": f"https://data-prd-{variant}-{client_lc}.aws.mdx.med/replication_status"})
+                 "validation": f"https://data-prd-{variant}-{validation_client}.aws.mdx.med/replication_status"})
 
     # ---------------- One Day before Deployment Scale out Steps ----------------
     plan.append({"heading": "One Day before Deployment Scale out Steps", "numbered": False})
