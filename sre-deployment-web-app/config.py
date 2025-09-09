@@ -7,7 +7,7 @@ VALID_CLIENTS = [
     "hcsc", "hcsclabor", "healthcomp", "highmark", "hmsa", "horizon", "kpwa", "kpco", "kpga",
     "kpnw", "lifewise", "medxoom", "moda", "molina", "firstchoice", "pai", "personify", "premera",
     "sandbox", "selecthealth", "sharedhealthms", "texicare", "triples", "trs"
-]
+] 
 
 CLIENT_ALIASES = {
     # NHP and its aliases

@@ -34,7 +34,7 @@ def generate_deployment_plan(client_lc: str, version: str, variant: str):
     """
 
     # Map for validation endpoint client names
-    VALIDATION_CLIENT_MAP = {
+    VALIDATION_CLIENT_MAP = { 
         "nhp": "allways",
         "tpa": "enterprise",
         "kpwa": "enterprise",
