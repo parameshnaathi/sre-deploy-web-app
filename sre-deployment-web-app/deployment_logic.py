@@ -48,7 +48,15 @@ def generate_deployment_plan(client_lc: str, version: str, variant: str):
         return []
     plan = []
 
+
     # ---------------- Main Numbered Steps ----------------
+    # Step 1: Deploy CD Tag Changes
+    plan.append({
+        "heading": "Deploy CD Tag Changes",
+        "commands": ["dradis deploy config next to engineering production"],
+        "validation": f"https://app-ops.aws.mdx.med/client_environments?client={client_lc}&env=production&variant={variant}"
+    })
+
     plan.append({"heading": "Freeze Active",
                  "commands": [f"dradis freeze {client_lc} production_{opposite}"]})
 
