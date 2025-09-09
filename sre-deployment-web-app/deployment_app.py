@@ -1,5 +1,6 @@
 
 # ...existing code...
+# ...existing code...
 import streamlit as st
 from deployment_logic import (
     get_client_dropdown_options,
@@ -7,6 +8,8 @@ from deployment_logic import (
     generate_deployment_plan
 )
 from slack_utils import send_command_to_slack
+import csv
+from datetime import datetime
 
 # ---------------- Streamlit UI ----------------
 st.title("🚀 Dradis Deployment Automation")
@@ -18,7 +21,10 @@ Commands are in **copyable code snippets**, with **clickable validation endpoint
 
 # Client dropdown with search (case-insensitive)
 
+
 # --- Session State Setup ---
+if 'username' not in st.session_state:
+    st.session_state.username = ''
 if 'selected_client_display' not in st.session_state:
     st.session_state.selected_client_display = None
 if 'version' not in st.session_state:
@@ -29,6 +35,14 @@ if 'plan' not in st.session_state:
     st.session_state.plan = None
 if 'slack_result' not in st.session_state:
     st.session_state.slack_result = {}
+
+# --- User Login ---
+st.header("User Login")
+username = st.text_input("Enter your name or email to use the automation:", value=st.session_state.username, key="username_input")
+st.session_state.username = username.strip()
+if not st.session_state.username:
+    st.warning("Please enter your name or email to use the automation.")
+    st.stop()
 
 CLIENT_DROPDOWN_OPTIONS = get_client_dropdown_options()
 DISPLAY_TO_CANONICAL = get_display_to_canonical()
@@ -91,6 +105,14 @@ if plan:
                     try:
                         success = send_command_to_slack(cmd)
                         st.session_state.slack_result[button_key] = success
+                        # Log the command execution
+                        with open("command_log.csv", "a", newline="") as csvfile:
+                            writer = csv.writer(csvfile)
+                            writer.writerow([
+                                st.session_state.username,
+                                datetime.now().isoformat(),
+                                cmd
+                            ])
                     except Exception as e:
                         st.session_state.slack_result[button_key] = str(e)
                 # Show Slack result if available
