@@ -53,17 +53,44 @@ VALUES (%s, %s, %s)
 """,
                 (username, command, datetime.now())
             )
-            conn.commit()
-        except Exception as insert_err:
-            if 'st' in locals() and st is not None:
-                st.error(f"Error inserting log: {insert_err}")
-            else:
-                print(f"Error inserting log: {insert_err}")
-            raise
-        cur.close()
-        conn.close()
-    except Exception as e:
-        if 'st' in locals() and st is not None:
-            st.error(f"Failed to log command to PostgreSQL: {e}")
-        else:
-            print(f"Failed to log command to PostgreSQL: {e}")
+            try:
+                st.write("[DEBUG] log_command_to_postgres called")
+                conn = get_postgres_connection()
+                st.write("[DEBUG] Connected to DB")
+                cur = conn.cursor()
+                # Always attempt to create the table (idempotent)
+                try:
+                    cur.execute('''
+        CREATE TABLE IF NOT EXISTS deployment_command_logs (
+            id SERIAL PRIMARY KEY,
+            username TEXT NOT NULL,
+            command TEXT NOT NULL,
+            timestamp TIMESTAMP NOT NULL
+        )
+        ''')
+                    st.write("[DEBUG] Table creation checked/executed")
+                except Exception as table_err:
+                    st.error(f"[Table Creation Error] {table_err}")
+                    print(f"[Table Creation Error] {table_err}")
+                    raise
+                # Insert log
+                try:
+                    cur.execute(
+                        """
+        INSERT INTO deployment_command_logs (username, command, timestamp)
+        VALUES (%s, %s, %s)
+        """,
+                        (username, command, datetime.now())
+                    )
+                    conn.commit()
+                    st.write("[DEBUG] Log inserted")
+                except Exception as insert_err:
+                    st.error(f"[Insert Error] {insert_err}")
+                    print(f"[Insert Error] {insert_err}")
+                    raise
+                cur.close()
+                conn.close()
+                st.write("[DEBUG] DB connection closed")
+            except Exception as e:
+                st.error(f"[Log Command Error] {e}")
+                print(f"[Log Command Error] {e}")
