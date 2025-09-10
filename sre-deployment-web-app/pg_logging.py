@@ -31,7 +31,7 @@ def log_command_to_postgres(username: str, command: str):
                     );
                 """)
                 cur.execute(
-                    "INSERT INTO command_log (username, timestamp, command) VALUES (%s, %s, %s)",
+                    "INSERT INTO deployment_command_logs (username, timestamp, command) VALUES (%s, %s, %s)",
                     (username, datetime.now(), command)
                 )
             conn.commit()
