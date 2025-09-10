@@ -1,5 +1,3 @@
-
-# ...existing code...
 # ...existing code...
 import streamlit as st
 from deployment_logic import (
@@ -8,8 +6,8 @@ from deployment_logic import (
     generate_deployment_plan
 )
 from slack_utils import send_command_to_slack
-import csv
 from datetime import datetime
+from pg_logging import log_command_to_postgres
 
 # ---------------- Streamlit UI ----------------
 st.title("🚀 Dradis Deployment Automation")
@@ -105,14 +103,8 @@ if plan:
                     try:
                         success = send_command_to_slack(cmd)
                         st.session_state.slack_result[button_key] = success
-                        # Log the command execution
-                        with open("command_log.csv", "a", newline="") as csvfile:
-                            writer = csv.writer(csvfile)
-                            writer.writerow([
-                                st.session_state.username,
-                                datetime.now().isoformat(),
-                                cmd
-                            ])
+                        # Log the command execution to PostgreSQL
+                        log_command_to_postgres(st.session_state.username, cmd)
                     except Exception as e:
                         st.session_state.slack_result[button_key] = str(e)
                 # Show Slack result if available

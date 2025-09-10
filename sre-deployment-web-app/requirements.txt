@@ -1,1 +1,2 @@
 slack_sdk
+psycopg2-binary
