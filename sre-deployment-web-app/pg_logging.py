@@ -8,20 +8,26 @@ def get_postgres_connection():
     """
     return psycopg2.connect(
         host=st.secrets["PG_HOST"],
-        port=st.secrets["PG_PORT"],
+        port=int(st.secrets["PG_PORT"]),
         dbname=st.secrets["PG_DBNAME"],
         user=st.secrets["PG_USER"],
         password=st.secrets["PG_PASSWORD"]
     )
 
 def log_command_to_postgres(username: str, command: str):
-    """
-    Logs the command execution to PostgreSQL with username and timestamp.
-    Creates the table if it does not exist.
-    """
-    try:
-        conn = get_postgres_connection()
-        cur = conn.cursor()
+        try:
+            conn = psycopg2.connect(
+                host=st.secrets["PG_HOST"],
+                port=int(st.secrets["PG_PORT"]),
+                dbname=st.secrets["PG_DBNAME"],
+                user=st.secrets["PG_USER"],
+                password=st.secrets["PG_PASSWORD"]
+            )
+            return conn
+        except Exception as e:
+            st.error(f"[DB Connection Error] {e}")
+            print(f"[DB Connection Error] {e}")
+            raise
         # Always attempt to create the table (idempotent)
         try:
             cur.execute('''
