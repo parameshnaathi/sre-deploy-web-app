@@ -1,5 +1,9 @@
-# ...existing code...
+
+# zelis UI code
 import streamlit as st
+from zelis_style import inject_zelis_style
+inject_zelis_style(st)
+
 from deployment_logic import (
     get_client_dropdown_options,
     get_display_to_canonical,
@@ -17,8 +21,8 @@ This tool generates **deployment steps** for a client environment.
 Commands are in **copyable code snippets**, with **clickable validation endpoints** below each.
 """)
 
-# Client dropdown with search (case-insensitive)
-
+# --- User Access Restriction (imported) ---
+from user_auth import is_authorized, get_user_fullname
 
 # --- Session State Setup ---
 if 'username' not in st.session_state:
@@ -36,11 +40,23 @@ if 'slack_result' not in st.session_state:
 
 # --- User Login ---
 st.header("User Login")
-username = st.text_input("Enter your name or email to use the automation:", value=st.session_state.username, key="username_input")
-st.session_state.username = username.strip()
+
+# Ask for email only
+user_email = st.text_input("Enter your email to use the automation:", value=st.session_state.username, key="username_input")
+st.session_state.username = user_email.strip()
 if not st.session_state.username:
-    st.warning("Please enter your name or email to use the automation.")
+    st.warning("Please enter your email to use the automation.")
     st.stop()
+
+# --- Authorization Check ---
+if not is_authorized(st.session_state.username):
+    st.error("You are not authorised to access this site.")
+    st.stop()
+
+# Save first and last name for future use
+first_name, last_name = get_user_fullname(st.session_state.username)
+st.session_state.first_name = first_name
+st.session_state.last_name = last_name
 
 CLIENT_DROPDOWN_OPTIONS = get_client_dropdown_options()
 DISPLAY_TO_CANONICAL = get_display_to_canonical()
